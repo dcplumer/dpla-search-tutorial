@@ -1,0 +1,244 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>DPLA API Tutorial</title>
+</head>
+
+<body>
+<p><em>This tutorial has been developed for use with the <a href="https://www.hackerleague.org/hackathons/hacking-dpla-at-tcdl" target="_blank">Hacking DPLA at TCDL</a> event scheduled for Sunday, April 27, 2014, at the University of Texas at Austin&#8217;s Perry-Castañeda Library. Anyone is welcome to reuse, modify, or adapt this tutorial for educational purposes. For other uses, please contact Danielle Cunniff Plumer, danielle@dcplumer.com.</em></p>
+<h3>Introduction</h3>
+<p>The Digital Public Library of America (DPLA) is a project to bring together the riches of America’s libraries, archives, and museums, and make them freely available to the world. It is a <a href="http://dp.la/" target="_blank">portal</a> that brings together approximately six million items from across the country, with more items added regularly, and presents them to visitors in a variety of contexts, including maps, timelines, and exhibits. It is also a <a href="http://dp.la/info/developers/codex/" target="_blank">platform</a> that allows developers to access and reuse the metadata from those items, with a robust application programming interface (API). One of the beauties of the DPLA community is that developers have already contributed libraries that simplify using the API. Libraries, in this sense, are bits of code that define functions and methods that can be used to interact with the API and interpret the data returned by the API.  In the DPLA Developer&#8217;s Codex, these are called &#8220;wrappers,&#8221; because they &#8220;wrap&#8221; the DPLA API, which is JSON-LD (<span style="color: #444444;">a lightweight Linked Data format)</span>, in a variety of other types of code, including <a href="https://github.com/willkara/DplaJavaWrapper" target="_blank">Java</a>, <a href="https://github.com/thisandagain/dpla" target="_blank">Node.js</a>, <a href="https://github.com/3ft9/php-dpla" target="_blank">PHP</a>, <a href="https://github.com/phereford/DPLibrary" target="_blank">Ruby</a>, and <a href="https://github.com/bibliotechy/DPyLA" target="_blank">Python</a>. If you&#8217;re comfortable developing code in any one of those languages, you&#8217;re in good shape. Finally, DPLA is an advocate for making our common cultural heritage openly available to the public, in the best tradition of libraries, archives, and museums. If you work with cultural heritage materials in any capacity, you are invited to <a href="http://dp.la/info/get-involved/" target="_blank">join the DPLA community</a> to help make this happen.</p>
+<p>In this tutorial, you will be developing a simple search form using the DPLA API. We&#8217;ll be working in HTML and PHP; no previous coding experience is required. At the end of the tutorial, you&#8217;ll have a working search form that displays results from the API that you can reuse on your personal webpage and perhaps in other contexts, though you might have to do a bit more work to include it in a blog or other content management system. This tutorial is intended to be self-paced, but we recommend that you go through it with other people who are also interested in learning how the DPLA API works. It&#8217;s more fun that way, and you might get some help if you get stuck.</p>
+<h3>Before We Start</h3>
+<p>For this tutorial, you will need:</p>
+<ul>
+<li>A plain-text editor. <a href="http://notepad-plus-plus.org/" target="_blank">Notepad++</a> is a good choice for Windows users; Sublime Text (<a href="http://www.sublimetext.com" target="_blank">http://www.sublimetext.com</a>) and BBEdit (<a href="http://www.barebones.com/products/bbedit/" target="_blank">http://www.barebones.com/products/bbedit/</a>) are possibilities for Mac users; free trial versions are available. A full-blown editor such as Dreamweaver or the Eclipse IDE is optional but not necessary (and might even get in the way).</li>
+<li>Access to either an account on a server (using FTP or equivalent method to upload your code) to test your app or a local development environment for PHP. XAMPP (<a href="https://www.apachefriends.org/index.html" target="_blank">https://www.apachefriends.org/index.html</a>) is a good choice for Windows; MAMP (<a href="https://www.mamp.info/en/" target="_blank">https://www.mamp.info/en/</a>) is an option for Macintosh. Both come in free versions.</li>
+<li>A DPLA API Key. The instructions to get your own personal API Key are available at <a href="http://dp.la/info/developers/codex/policies/#get-a-key" target="_blank">http://dp.la/info/developers/codex/policies/#get-a-key</a>, along with a lot of other useful information about the API. To get a key:
+<ul>
+<li>If you&#8217;re using a Mac with OS X, you can open up the Terminal (in Applications/Utilities) and type the command <code>curl -v -XPOST http://api.dp.la/v2/api_key/<span style="color: #993300;">YOUR_EMAIL@example.com</span></code>, where you insert your preferred email address. Don&#8217;t just copy and paste this, because I imagine that <span style="color: #000000;"><code>YOUR_EMAIL@example.com</code></span> has received many API Keys already. If you&#8217;re using Windows, you could install <a href="http://curl.haxx.se" target="_blank">CuRL</a> for this step, though many alternatives exist.</li>
+<li>Now check your email. You should have received an email from <span style="color: #3366ff;">api-support@dp.la </span><span style="color: #222222;">with your new API key. Save it somewhere for future use. </span></li>
+<li><span style="color: #222222;">If you want to try your new key out immediately, open a new browser tab and paste the following information into the URL:</span>
+<pre style="color: #000000;">http://api.dp.la/v2/items?q=weasels&amp;api_key=<span style="color: #993300;">YOURAPIKEY0000000000000000000001</span></pre>
+<p>Insert the API Key you just received instead of using the placeholder (naturally) and hit Enter. You will get back a screen full of text, which you probably won&#8217;t be able to read. There&#8217;s some explanation of what you&#8217;re seeing at <a href="http://dp.la/info/developers/codex/api-basics/" target="_blank">http://dp.la/info/developers/codex/api-basics/</a>, but you don&#8217;t really need to be able to read the response yourself. That&#8217;s what computers are for.</li>
+</ul>
+</li>
+</ul>
+<h3>Simple DPLA Search</h3>
+<p>We will start this tutorial by writing a simple HTML form to search DPLA without using the API. This simple search is modeled on (and re-uses some code from) the <a href="http://dp.la/apps/17" target="_blank">DPLA Search Widget</a> developed by Dean Farrell and Josh Wilson. There&#8217;s some discussion about how to work with and modify this tool at &#8220;<a title="Hacking DPLA at TCDL" href="http://www.dcplumer.com/2014/04/hacking-dpla-at-tcdl/">Hacking DPLA at TCDL</a>.&#8221; The search form you build will look like this:</p>
+<p><img class="size-large wp-image-439 alignleft" src="http://www.dcplumer.com/wp-content/uploads/2014/04/simplesearch-2.gif" alt="simplesearch-2" width="215" /></p>
+<p>&nbsp;</p>
+<p>Open up your plain-text editor and start an HTML page. Copy and paste the following code:</p>
+<pre>&lt;!doctype html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta charset="UTF-8"&gt;
+&lt;title&gt;Simple DPLA Search Example&lt;/title&gt;
+&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8" /&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+This is where the search form will go.
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+<p>Save this file as <code>DPLA-simple-search.html</code> on your computer. Now open the file in a web browser. In most browsers, you can just select <code>File &gt; Open File</code> and navigate to the file you want to view.</p>
+<p><img class="size-large wp-image-438 alignleft" src="http://www.dcplumer.com/wp-content/uploads/2014/04/simplesearch-1-1024x417.png" alt="simplesearch-1" width="400" /></p>
+<p>&nbsp;</p>
+<p>This file is what is sometimes called a &#8220;stub,&#8221; a simple way to get started with a new coding project.</p>
+<p>In your plain text editor, you now need to create a form. The code for this is very simple. Copy and paste this in place of the line &#8220;This is where the search form will go.&#8221;</p>
+<pre>&lt;form action="http://dp.la/search" method="get" target="_blank"&gt;
+ &lt;input name="q" type="text" placeholder="Search DPLA" /&gt;
+ &lt;input type="submit" title="Search" value="Search" /&gt;
+&lt;/form&gt;</pre>
+<p>This tells the browser to insert a simple search form that allows people to enter one or more search term and then sends a search query to the DPLA&#8217;s search portal, showing the results in a new window or tab.</p>
+<p>Next, add an image. Before the form, insert the following line:</p>
+<pre>&lt;img src="http://dp.la/info/wp-content/uploads/2013/12/dpla-search-widget-logo.png" width="190" height="52" /&gt;</pre>
+<p>This inserts the DPLA logo above the search form.</p>
+<p>The final step is to add the formatting, which is done through a Cascading Style Sheet (CSS) file. You don&#8217;t have to write it, just insert the link to an existing file that has already been created. Before the <code>&lt;/head&gt;</code> tag, on line 7 of your HTML file, insert a new line containing:</p>
+<pre>&lt;link href="http://dp.la/info/wp-content/uploads/2013/12/dpla-search-widget.css" rel="stylesheet" type="text/css"&gt;</pre>
+<p>Next you need to insert a <code>&lt;div&gt;</code>, which tells the browser to look at a specific portion of the stylesheet to get the formatting for the form. After the line with the <code>&lt;body&gt;</code> tag, and before the line that inserts the DPLA logo, add the line:</p>
+<pre>&lt;div id="dpla_search_widget"&gt;</pre>
+<p>Then, after the <code>&lt;/form&gt;</code> line and before the <code>&lt;/body&gt;</code> line, insert a new line:</p>
+<pre>&lt;/div&gt;</pre>
+<p>Save your file and view it again in your browser. Test it out! If you have an Internet connection, it should allow you to search the DPLA portal. If you have any problems, ask an organizer for help.</p>
+<h3>Adding the API</h3>
+<p>Your simple search form uses the standard DPLA search, sending the query in our input to <code>http://dp.la/search</code>. We can replace this URL with the URL for the API search, <code>http://api.dp.la/v2/items?q=</code>. Make this change, and save the file as <code>dpla-api-search.html</code> on your computer. Open the new file in your browser and test the search again.</p>
+<p>On testing the new code, you should get the response:</p>
+<pre>{"message":"Unauthorized: Missing, invalid or inactive api_key"}</pre>
+<p>(If you get something radically different, ask an organizer for help).</p>
+<p>To fix this, you need to add your API Key to the form input. You will be adding this as a &#8220;hidden&#8221; input, after the line for the &#8220;Search DPLA&#8221; input and before the &#8220;Submit&#8221; input. Insert the line:</p>
+<pre>&lt;input type="hidden" name="api_key" value="<span style="color: #993300;">YOURAPIKEY0000000000000000000001</span>"&gt;</pre>
+<p>Using your own API key, of course.</p>
+<p>Now save the line and try opening the file and running the search again. In a new tab or window, you should see a screen full of text. Depending on which browser you use, it might be structured text or it might appear as a solid block of text. In either case, <strong>this is not an error</strong>. You have successfully gotten a response from the DPLA API!</p>
+<p>To make sense of the response, you might want to look at <a href="http://dp.la/info/developers/codex/responses/" target="_blank">http://dp.la/info/developers/codex/responses/</a>, which presents the response as structured text, and <a href="http://dp.la/info/developers/codex/responses/field-reference/" target="_blank">http://dp.la/info/developers/codex/responses/field-reference/</a>, where the various fields that are returned are explained. We&#8217;ll look at a few of the fields in the next step, where we interpret the response in order to format it in the browser.</p>
+<h3>Interpreting the Response</h3>
+<p>Before we can begin this section, however, we need to change technologies. We&#8217;ve been working in straight HTML, which is a rendered language. That is, a web browser is programmed to read the the code and format it for easy reading on the screen. To make sense of the response you are seeing from the DPLA API, we need to be able to interpret the results. The language we will use for that is PHP, a fairly lightweight server-side scripting language. In order to make PHP code readable, we need more than just a browser; we need a web server capable of interpreting the code and creating the HTML for a browser to render.</p>
+<p>At this point, you should launch XAMPP or MAMP on your computer. This will start up a webserver on your computer capable of interpreting PHP. This will simplify the job of testing our PHP code, saving you the task of uploading the code to a server somewhere everytime you change a line (although you can do that, if you prefer).</p>
+<p>You need to create a new directory on your computer, within the XAMPP or MAMP application directory, in which to save your PHP code. On a Macintosh, running MAMP, the location will probably be <code>/Applications/MAMP/bin</code>. Inside the <code>/bin</code> directory, create a new directory called <code>dpla-search</code>. Move or copy your <code>dpla-simple-search.html</code> and <code>dpla-api-search.html</code> files there.</p>
+<p><em>Note: please help improve this tutorial by reporting the path to your <code>MAMP/bin</code> or <code>XAMPP/bin</code> directory. Thank you!</em></p>
+<p>Next, you need to convert your  <code>dpla-api-search.html</code> file to PHP. In your plain text editor, add the following lines immediate after the &lt;body&gt; and before the &lt;/body&gt; tags:</p>
+<pre>&lt;?php&gt;</pre>
+<pre>?&gt;</pre>
+<p>The body of your code should now look like this:</p>
+<pre>&lt;body&gt;
+&lt;?php
+&lt;div id="dpla_search_widget"&gt;
+&lt;img src="http://dp.la/info/wp-content/uploads/2013/12/dpla-search-widget-logo.png" width="190" height="52" longdesc="http://dp.la" /&gt;
+&lt;form action="http://api.dp.la/v2/items?q=" method="get" target="_blank"&gt;
+  &lt;input name="q" type="text" placeholder="Search DPLA" /&gt;
+  &lt;input type="hidden" name="api_key" value="<span style="color: #993300;">YOURAPIKEY0000000000000000000001</span>"&gt;
+  &lt;input type="submit" title="Search" value="Search" /&gt;
+&lt;/form&gt;
+&lt;/div&gt;
+?&gt;
+&lt;/body&gt;</pre>
+<p>PHP actually won&#8217;t actually know what to do with the HTML markup, however, because that needs to be rendered in a browser. We therefore need to tell PHP to send that markup to the browser verbatim, which is done by enclosing every line in an echo command. At the beginning of every line, insert echo &#8216; and at the end of the line insert &#8216;;</p>
+<p>For example:</p>
+<pre>echo '&lt;div id="dpla_search_widget"&gt;';</pre>
+<p>Then save the file as <code>dpla-api-search.php</code>. Your plain text editor may change the colors of the text when you save it; <strong>this is not an error.</strong></p>
+<p>At this point, go into your webbrowser and open the file through the local server that MAMP or XAMPP has launched. The URL is probably:</p>
+<pre>http://localhost:8888/MAMP/dpla-search/dpla-api-search.php</pre>
+<p><em>Note: please help improve this tutorial by reporting the actual URL for your file on your local server. Thank you!</em></p>
+<p>The form should look exactly the same as it did when you looked at the straight HTML version. In fact, if your web browser allows you to &#8220;View Source,&#8221; you will note that the markup is exactly the same as it was in the HTML version, with perhaps some formatting changes. This is because PHP has passed the markup verbatim to the browser, because of the echo commands.</p>
+<p>However, we need to make some changes to the code. Among other things, we don&#8217;t really want the API Key to be visible in the page source. You don&#8217;t need to guard the API Key as carefully as you might a key from a commercial entity or vendor, but it&#8217;s still better not to leave it where anybody can steal it. We also need to make sure that PHP can read the query that is entered in the form in order to correctly pass it to the DPLA API and interpret the subsequent response.</p>
+<p>Delete the lines containing the form you originally created. Replace them with these lines:</p>
+<pre>$self = $_SERVER['PHP_SELF'];
+$form = '           
+  &lt;form name="dpla_widget" method="post" action="'.$self.'"&gt;           
+  &lt;input type="text" name="q" placeholder="Search DPLA"&gt;
+  &lt;input type="submit" name="append" value="Search" &gt;
+&lt;/form&gt;';
+</pre>
+<p>This may seem like a backwards step. There&#8217;s no use of the DPLA API at all! Instead, what we are doing is creating two variables for PHP, <code>$self</code> and <code>$form</code>. <code>$self</code> tells PHP not to send the query anywhere but simply to store it, and also to save the form itself in case it is needed.<br />
+Then we add an IF-THEN-ELSE command:</p>
+<pre>if(isset($_POST['append'])){
+  $query = $_POST['q'];
+  $url = "http://api.dp.la/v2/items?q=".$cquery.'&amp;api_key=<span style="color: #993300;">YOURAPIKEY0000000000000000000001</span>';
+  echo $form; 
+  echo $url;
+}else{
+  echo $form; 
+  }
+</pre>
+<p>We can interpret this command to mean &#8220;If a query has been entered and the submit button has been pressed, save the text that was entered in the query box in the variable $query and construct a search URL that includes both the query and the API key.&#8221;</p>
+<p>Save the file and try opening it in your localhost, entering a query and pressing submit. You should see the URL that would be passed to the DPLA API appear on the screen. This is because we told PHP to echo the form and the URL, but not to do anything else with them.</p>
+<p>Now we can test for a few possible issues. First, reload the form. Press the submit button without entering a query. You should get a URL of the form:</p>
+<pre>http://api.dp.la/v2/items?q=&amp;<span style="color: #993300;">YOURAPIKEY0000000000000000000001</span>
+</pre>
+<p>Try opening a new table in your web browser and entering that URL. You will get a screen full of text, as before, but note that it starts with the text &#8220;count&#8221;: and a very large number. Congratulations! You have just found every record in the DPLA index! We clearly need to suppress &#8220;empty&#8221; queries. Change the first line of your new search form to:</p>
+<pre>if(!empty($_POST['q']) &amp;&amp; isset($_POST['append'])){</pre>
+<p>This checks to make sure that a query has actually been entered (!empty means &#8220;is not empty&#8221;) as well as that the submit button has been pressed (&amp;&amp; means &#8220;and&#8221;).</p>
+<p>Another error we can easily anticipate is related to the way PHP encodes spaces and other special characters in the query, which is verbatim. Try reloading the form and entering the query &#8220;Texas Star.&#8221; The URL that is generated includes the space. Similarly, special characters such as <code>&amp;</code> and <code>?</code> are encoded verbatim. While the DPLA API is remarkably tolerant of these issues, we can see what behavior it prefers if we search the DPLA portal directly. The query &#8220;Texas &amp; the lone star?&#8221; is encoded as &#8220;Texas+%26+the+lone+star%3F&#8221;. Such an encoding prevents some subtle mistakes from creeping in later on, so we need to add a bit of code to clean our query before we send it to the DPLA API.</p>
+<p>Replace your IF-THEN-ELSE command with the following:</p>
+<pre>if(isset($_POST['append'])){
+  $query = $_POST['q'];
+  $cquery = str_replace(' ', '+', $query);
+  $cquery = str_replace('?', '%26', $cquery);
+  $cquery = str_replace('&amp;', '%3F', $cquery);
+  $url = "http://api.dp.la/v2/items?q=".$cquery.'&amp;api_key=<span style="color: #993300;">YOURAPIKEY0000000000000000000001</span>';
+  echo $form; 
+  echo $url;
+}else{
+  echo $form; 
+  }
+</pre>
+<p>There are cleaner ways to accomplish this using other PHP commands, but this will work for now. The idea of testing your code against the DPLA portal as you work is the important point to remember. Errors will sneak in despite your best efforts, but testing will help minimize the damage. Part of the reason for having a unique personal API Key is so that DPLA staff can contact you if the errors start to become a problem for them.</p>
+<p>Having developed the search input form thus far, we should try to send the result to the DPLA for processing. For this portion of the code, we are going to modify some PHP previously developed by Eric Frierson, efrierson@ebsco.com, for use in the <a href="http://dp.la/apps/15" target="_blank">EBSCO Discovery Service and DPLA Highlights</a> app. Eric has commented his code, which is a good practice to follow. In PHP, comments are marked by <code>//</code>.</p>
+<p>Remove the line</p>
+<pre>  echo $url;</pre>
+<p>We won&#8217;t need it any more, and it uglifies our search results.</p>
+<p><em>Note: we can&#8217;t test this code incrementally, but I&#8217;m going to insert it in pieces and explain as I go. Save frequently.</em></p>
+<p>Insert the following lines after the  echo &#8216;&lt;/div&gt;&#8217;; line following your search form:</p>
+<pre>$session = curl_init($url);                            // Open the Curl session
+curl_setopt($session, CURLOPT_HEADER, false);          // Don't return HTTP headers
+curl_setopt($session, CURLOPT_RETURNTRANSFER, true);   // Do return the contents of the call
+$xml = curl_exec($session);                            // Make the call
+curl_close($session);                                  // And close the session
+
+// create a json object to traverse
+$result = json_decode($xml);
+</pre>
+<p>This code sends the URL you constructed through the search form to the DPLA API. Rather than passing it in the browser navigation area, it uses curl, which has the effect of obfuscating your API Key. It also creates a variable, <code>$result</code>, which contains the JSON Linked Data response from the DPLA API, decoded for faster processing.</p>
+<pre>// get number of results
+$numresults = intval($result-&gt;count);
+$count = 0;
+echo 'Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:';</pre>
+<p>This reads the response, looking for the count of objects found by the query. <code>Count</code> happens early in the response; the number is then stored in the variable <code>$results</code>, and the variable <code>$count</code> is set to zero. This variable will be used to count the objects that are displayed in our results.</p>
+<pre>echo '&lt;table border="0" cellspacing="3"&gt;';
+foreach ($result-&gt;docs as $doc) {
+
+// for each result (up to 10), show an image, a title, and have both link to the item at its original location
+// also show name of institution (dataProvider), but do not link to the dataProvider
+
+$count++;
+if ($count &lt;= 10) {
+$link = $doc-&gt;isShownAt;
+$title = $doc-&gt;sourceResource-&gt;title;
+$provider = $doc-&gt;dataProvider;
+</pre>
+<p>Here, the code inserts a table that will be used to display the DPLA results and begins processing the individual objects from the DPLA API response, using a <code>foreach</code> method that loops through the response. For each of the first 10 objects in the response, the code will extract three pieces of information: the URL of the original item, wherever it might be online (in the response, <code>isShownAt</code>); the title of the object (<code>title</code>, found in the section of the response labeled <code>sourceResource</code>), and the name of the institution that put the object online (<code>dataProvider</code>), which is usually the institution that holds the original document, photograph, or artifact. Each of these pieces of information will be stored in a separate variable. Because DPLA pulls information from many different &#8220;hubs,&#8221; the URL of the object will not be a DPLA address but will rather be the address of the hub that has the object in its asset management system.</p>
+<p>The distributed nature of DPLA also means that the metadata provided in a response is often inconsistent. Sometimes, hubs provide more than one title, for example, which is represented in the response as an array. This presents a problem, so we need to include some extra code to only use the first title in the array. The provider field is handled the same way.</p>
+<pre>// sometimes I find an array in the title node - this will grab the first title
+if (is_array($title)) {
+$title = $title[0];
+}
+
+// sometimes I find an array in the provider node - this will grab the first provider
+if (is_array($provider)) {
+$provider = $provider[0];
+}
+</pre>
+<p>We haven&#8217;t yet looked to see if there is a thumbnail image for the object included in the response. Most, but not all, objects have thumbnails, but we need to address the case in which there is no image. The variable <code>$image</code> will hold either the URL of the thumbnail image or the URL of a placeholder, as used by DPLA itself.</p>
+<pre>// if there is an image, it's here
+if (isset($doc-&gt;object)) {
+$image = $doc-&gt;object;
+}
+
+// if not, show placeholder image
+if (!(isset($image))) {
+$image = "http://dp.la/assets/icon-text.gif";
+}
+</pre>
+<p>Finally, we put this all together to display the item in a table row with two cells, one for the thumbnail and one for the title and institution name:</p>
+<pre>// display item
+echo '&lt;tr&gt;&lt;td&gt;&lt;a href="'.$link.'" target="_blank"&gt;&lt;img src="' . $image . '" width="55" /&gt;&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a href="' . $link . '" target="_blank"&gt;' . $title . '&lt;/a&gt;&lt;br/&gt;' . $provider . '&lt;/td&gt;&lt;/tr&gt;';
+}
+}
+echo '&lt;/table&gt;';
+</pre>
+<p>That&#8217;s it! Save your code, and then open it in your local server.</p>
+<p>Did you notice an error? Even before you enter a query, it displays the information:</p>
+<pre>Your search for "" returned 0 results. Results 1-10:
+</pre>
+<p>To correct this, we need to insert another IF-THEN-ELSE clause, wrapping the entire response. First, we want to make sure that no message at all is displayed before a query is submitted. Second, we want to consider the possibility that no results at all are returned, in which case we don&#8217;t want the message to say &#8220;Results 1-10:&#8221;. We will need to insert the first part of the IF-THEN-ELSE clause before the statement telling the user how many results were returned. Replace the lines</p>
+<pre>$count = 0;
+echo 'Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:';</pre>
+<p>with</p>
+<pre>$count = 0;
+if ($numresults &gt; 0) {
+  echo 'Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:';</pre>
+<p>Now add the following lines after the <code>echo '&lt;/table&gt;';</code> line, before the ending PHP line, <code>?&gt;</code>:</p>
+<pre>  } else {
+
+  // no results case. If no results, return error message. Also include a null response for the initial condition, pre-query.
+  if (isset($cquery)) {
+    echo 'Please search again.';
+    } else {
+      echo ' ';
+      }
+  }
+</pre>
+<p>There are a few more things we can do to improve this display. One is to address the issue of how to show the user additional results, if there are more than 10. We&#8217;ll cheat a little here; rather than providing a link for &#8220;next&#8221; or some other method to display the remaining results, we will simply provide a link that takes the user to the DPLA portal, with the search for the query pre-populated, much as we did in our original simple search example.</p>
+<pre>// provide link to jump out to DPLA search, including query
+echo '&lt;a href="http://dp.la/search?q='.$query.'" target="_blank"&gt;See full results for your query "'.$cquery.'" at the Digital Public Library of America&lt;/a&gt;';
+</pre>
+<p>There are other things that could be done. We could improve the CSS for our results, and we could add other information to the display. Look through the DPLA API response to see what else might be useful. Creator? Description? Subject? Location?</p>
+<p>We could also modify the search form. The DPLA API allows searches on specific fields &#8212; for example, it is possible to search only the title field, or location, or creator, and so on. It would even be possible to create an Advanced Search form, which would appeal to librarians, if not to other users. But that, as they say, is a topic for another day, or at least for another tutorial.</p>
+<h3>The End</h3>
+<p>Congratulations! You&#8217;ve reached the end of the tutorial. If you want to check your work, a complete <code>dpla-api-search.php</code> example, as well as example <code>dpla-simple-search.html</code> and <code>dpla-api-search.html</code> pages and the text of this tutorial have been checked into GitHub at <a href="https://github.com/dcplumer/dpla-search-tutorial">https://github.com/dcplumer/dpla-search-tutorial</a>. If you have any questions about this tutorial, please contact:</p>
+<p>Danielle Cunniff Plumer<br />
+danielle@dcplumer.com</p>
+</body>
+</html>
