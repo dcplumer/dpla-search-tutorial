@@ -17,6 +17,8 @@ For other uses, please contact Danielle Cunniff Plumer, danielle@dcplumer.com.
 
 Includes example files: 
 
---simple search (HTML), using DPLA Portal
---API search without results (HTML)
---API search with results (PHP)
+dpla-simple-search.html, using DPLA Portal
+
+dpla-api-search.html, API search without results
+
+dpla-api-search.php, API search with results
