@@ -6,7 +6,6 @@
 </head>
 
 <body>
-<p><em>This tutorial was originally developed for use with the <a href="https://www.hackerleague.org/hackathons/hacking-dpla-at-tcdl" target="_blank">Hacking DPLA at TCDL</a> event held Sunday, April 27, 2014, at the University of Texas at Austin&#8217;s Perry-Castañeda Library. Anyone is welcome to reuse, modify, or adapt this tutorial for educational purposes. For other uses, please contact Danielle Cunniff Plumer, danielle@dcplumer.com.</em></p>
 <h3>Introduction</h3>
 <p>The Digital Public Library of America (DPLA) is a project to bring together the riches of America’s libraries, archives, and museums, and make them freely available to the world. DPLA has multiple roles:</p>
 <ul>
@@ -42,9 +41,6 @@
 <h3>Simple DPLA Search</h3>
 <p>We will start this tutorial by writing a simple HTML form to search DPLA without using the API. This simple search is modeled on (and re-uses some code from) the <a href="http://dp.la/apps/17" target="_blank">DPLA Search Widget</a> developed by Dean Farrell and Josh Wilson. There&#8217;s some discussion about how to work with and modify this tool at the blog post &#8220;<a title="Hacking DPLA at TCDL" href="http://www.dcplumer.com/2014/04/hacking-dpla-at-tcdl/">Hacking DPLA at TCDL</a>.&#8221; The search form you build will look like this:</p>
 <p><img class="size-large wp-image-439 alignleft" src="http://www.dcplumer.com/wp-content/uploads/2014/04/simplesearch-2.gif" alt="simplesearch-2" width="215" /></p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
 <p>Open up your plain-text editor and start an HTML page. Copy and paste the following code:</p>
 <pre>&lt;!doctype html&gt;
 &lt;html&gt;
@@ -60,12 +56,6 @@ This is where the search form will go.
 &lt;/html&gt;</pre>
 <p>Save this file as <code>DPLA-simple-search.html</code> on your computer. Now open the file in a new tab in your web browser. In most browsers, you can just select <code>File &gt; Open File</code> and navigate to the file you want to view. As you continue to work through this tutorial, you will need to reload the file periodically to be sure that it reflects the changes you have saved.</p>
 <p><img class="size-large wp-image-438 alignleft" src="http://www.dcplumer.com/wp-content/uploads/2014/04/simplesearch-1-1024x417.png" alt="simplesearch-1" width="400" /></p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
 <p>This file is what is sometimes called a &#8220;stub,&#8221; a simple way to get started with a new coding project.</p>
 <p>In your plain text editor, you now need to create a form. The code for this is very simple. Copy and paste this in place of the line &#8220;This is where the search form will go.&#8221;</p>
 <pre>&lt;form action="http://dp.la/search" method="get" target="_blank"&gt;
@@ -193,6 +183,7 @@ curl_close($session);
 $result = json_decode($xml);
 </pre>
 <p>This code sends the URL you constructed through your search form to the DPLA API. Rather than passing it in the browser navigation area, it uses <code>curl</code>, which has the effect of obfuscating your API Key. The results code also creates a variable, <code>$result</code>, which contains the JSON Linked Data response from the DPLA API, decoded for faster processing using a PHP function called <code>json_decode</code>.</p>
+<h3>Displaying Results</h3>
 <p>First, we want to know how many results there are. Immediately after the code you just inserted, add:</p>
 <pre>// get number of results
 $count = 0;
@@ -309,10 +300,33 @@ echo '&lt;tr&gt;&lt;td&gt;&lt;a href="'.$link.'" target="_blank"&gt;&lt;img src=
 <p>There are a few more things we can do to improve this display. One is to address the issue of how to show the user additional results, if there are more than 10. We&#8217;ll cheat a little here; rather than providing a link for &#8220;next&#8221; or some other method to display the remaining results, we will simply provide a link that takes the user to the DPLA portal, with the search for the query pre-populated, much as we did in our original simple search example.</p>
 <p>Insert this code directly after the line <code>echo '&lt;/table&gt;';</code></p>
 <pre>// provide link to jump out to DPLA search, including query
-echo '&lt;a href="http://dp.la/search?q='.$query.'" target="_blank"&gt;See full results for your query "'.$cquery.'" at the Digital Public Library of America&lt;/a&gt;';
+echo '&lt;a href="http://dp.la/search?q='.$cquery.'" target="_blank"&gt;See full results for your query "'.$query.'" at the Digital Public Library of America&lt;/a&gt;';
 </pre>
-<p>Save and test your code.</p>
-<p>&nbsp;</p>
+<h3>Testing the Code</h3>
+<p>Save and test your code. Testing is critical to successful coding. Try running as many different tests as you can think of to find problems. Use special characters in your query. Search for specific known items. At this point, you want to try to break your code so that users won&#8217;t discover issues later on.</p>
+<p>Here&#8217;s an example of a minor issue that might come up. For some queries, there might be more than zero but fewer than 10 results. It doesn&#8217;t happen often (DPLA has more than 7 million items at the time I was developing this!), but it does happen. Try experimenting with searches, adding additional key words, to see if you can find an example of this.</p>
+<p>In a case like this, we don&#8217;t want to tell the user that we&#8217;re showing them &#8220;results 1-10&#8243; when there are fewer than 10 results displayed. And we don&#8217;t want to send them to see more results at DPLA if there&#8217;s nothing more to show. We can fix this with two more IF-THEN-ELSE statements.</p>
+<p>Change the line</p>
+<pre>echo '&lt;p&gt;Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:&lt;/p&gt;';</pre>
+<p>To say</p>
+<pre>if ($numresults &lt; 10) {
+  echo '&lt;p&gt;Your search for "'.$query.'" returned '.$numresults.' results. Results 1-'.$numresults.':&lt;/p&gt;';
+} else {
+  echo '&lt;p&gt;Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:&lt;/p&gt;';
+}</pre>
+<p>Because you&#8217;re already working within an IF statement, you need to be very careful with your curly braces here. Mismatched beginning and end braces will cause your code to break. When you test it, it might not provide an results at all, or it might display an error message.</p>
+<p>We also need to make a change to the closing redirect out to DPLA search results. Replace the lines:</p>
+<pre>// provide link to jump out to DPLA search, including query
+echo '&lt;a href="http://dp.la/search?q='.$cquery.'" target="_blank"&gt;See full results for your query "'.$query.'" at the Digital Public Library of America&lt;/a&gt;';
+</pre>
+<p>with</p>
+<pre>if ($numresults &gt; 10) {
+  // provide link to jump out to DPLA search, including query
+  echo '&lt;a href="http://dp.la/search?q='.$cquery.'" target="_blank"&gt;See full results for your query "'.$query.'" at the Digital Public Library of America&lt;/a&gt;';
+} else {
+  echo 'Results provided by the &lt;a href="http://dp.la" target="_blank"&gt;Digital Public Library of America&lt;/a&gt;.';
+}</pre>
+<p>The code should now return a simple &#8220;Results provided by&#8221; statement if there are fewer than 10 results. Because all of this is  wrapped within an IF statement that ensures that there are some results to work with, we should still get a different message when there are zero results. Test again to be sure.</p>
 <h3>The End</h3>
 <p>Congratulations! You&#8217;ve reached the end of the tutorial. There are other things that could be done with this search form. We could improve the CSS for our results, and we could add other information to the display. Look through the DPLA API response to see what else might be useful. Creator? Description? Subject? Location?</p>
 <p>We could also modify the search form. The DPLA API allows searches on specific fields &#8212; for example, it is possible to search only the title field, or location, or creator, and so on. It would even be possible to create an Advanced Search form, which would appeal to librarians, if not to other users. But that, as they say, is a topic for another day, or at least for another tutorial.</p>
