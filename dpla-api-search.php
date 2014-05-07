@@ -51,8 +51,15 @@ $count = 0;
 
 // if number of results are greater than zero, display number of results.
 if ($numresults > 0) {
-  echo '<p>Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:</p>';
-  
+	
+	if ($numresults < 10) {
+		// if number of results is fewer than 10, state that results 1-whatever are shown.
+  		echo '<p>Your search for "'.$query.'" returned '.$numresults.' results. Results 1-'.$numresults.':</p>';
+	} else {
+		// if number of results is greater than 10, state that results 1-10 are shown.
+  		echo '<p>Your search for "'.$query.'" returned '.$numresults.' results. Results 1-10:</p>';
+	}
+	
   // insert table for results
   echo '<table border="0" cellspacing="3">';
 
@@ -90,9 +97,14 @@ if ($numresults > 0) {
       }
     }
     echo '</table>';
-	
-	// provide link to jump out to DPLA search, including query
-	echo '<a href="http://dp.la/search?q='.$query.'" target="_blank">See full results for your query "'.$cquery.'" at the Digital Public Library of America</a>';
+
+	if ($numresults > 10) {
+		// provide link to jump out to DPLA search, including query
+		echo '<a href="http://dp.la/search?q='.$cquery.'" target="_blank">See full results for your query "'.$query.'" at the Digital Public Library of America</a>';
+	} else {
+		// if number of results are greater than zero but fewer than 10, provide link to DPLA without query
+  		echo 'Results provided by the <a href="http://dp.la" target="_blank">Digital Public Library of America</a>.';
+	}
 	
   } else {
 
